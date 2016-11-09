@@ -74,6 +74,12 @@ function Formatter(el, opts) {
   utils.addListener(self.el, 'paste', function (evt) {
     self._paste(evt);
   });
+  utils.addListener(self.el, 'focus', function (evt) {
+    self._focus(evt);
+  });
+  utils.addListener(self.el, 'blur', function (evt) {
+    self._blur(evt);
+  });
 
   // Persistence
   if (self.opts.persistent) {
@@ -82,15 +88,13 @@ function Formatter(el, opts) {
     self.el.blur();
 
     // Add Listeners
-    utils.addListener(self.el, 'focus', function (evt) {
-      self._focus(evt);
-    });
     utils.addListener(self.el, 'click', function (evt) {
       self._focus(evt);
     });
     utils.addListener(self.el, 'touchstart', function (evt) {
       self._focus(evt);
     });
+
   }
 }
 
@@ -202,19 +206,37 @@ Formatter.prototype._paste = function (evt) {
 // Handle called on focus event.
 //
 Formatter.prototype._focus = function () {
+  var self = this;
+
+  // Store the value of the input on focus so we can see if it changes
+  this._focusValue = self.el.value;
+
+  if(self.opts.persistent) {
+    // Wrapped in timeout so that we can grab input selection
+    setTimeout(function () {
+      // Grab selection
+      var selection = inptSel.get(self.el);
+      // Char check
+      var isAfterStart = selection.end > self.focus,
+        isFirstChar = selection.end === 0;
+      // If clicked in front of start, refocus to start
+      if (isAfterStart || isFirstChar) {
+        inptSel.set(self.el, self.focus);
+      }
+    }, 0);
+  }
+};
+
+//
+// @private
+// Handle called on blur event.
+//
+Formatter.prototype._blur = function () {
   // Wrapped in timeout so that we can grab input selection
   var self = this;
-  setTimeout(function () {
-    // Grab selection
-    var selection = inptSel.get(self.el);
-    // Char check
-    var isAfterStart = selection.end > self.focus,
-        isFirstChar  = selection.end === 0;
-    // If clicked in front of start, refocus to start
-    if (isAfterStart || isFirstChar) {
-      inptSel.set(self.el, self.focus);
-    }
-  }, 0);
+  if (this._focusValue !== self.el.value) {
+    utils.dispatchEvent(self.el, 'change');
+  }
 };
 
 //
