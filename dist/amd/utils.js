@@ -59,6 +59,19 @@ utils.addListener = function (el, evt, handler) {
 };
 
 //
+// Helper method for cross browser event dispatching
+//
+utils.dispatchEvent = function(el, eventType) {
+  if (el.dispatchEvent) {
+    var event = document.createEvent('Events');
+    event.initEvent(eventType, true, false);
+    el.dispatchEvent(event);
+  } else {
+    el.fireEvent('on' + eventType);
+  }
+};
+
+//
 // Helper method for cross browser implementation of preventDefault
 //
 utils.preventDefault = function (evt) {
